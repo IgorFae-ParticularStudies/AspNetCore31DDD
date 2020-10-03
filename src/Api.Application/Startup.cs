@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Api.CrossCutting.DependencyInjection;
+using Api.CrossCutting.Mappings;
 using Api.Domain.Security;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -29,6 +31,17 @@ namespace application
             ConfigureRepository.ConfigureDependenciesRepository(services);
             ConfigureService.ConfigureDependenciesService(services);
 
+            // Configurações da injeção de dependência do AutoMapper
+            var config = new AutoMapper.MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new DtoToModelProfile());
+                cfg.AddProfile(new EntityToDtoProfile());
+                cfg.AddProfile(new ModelToEntityProfile());
+            });
+
+            IMapper mapper = config.CreateMapper();
+            services.AddSingleton(mapper);
+
             // Configurações para atender a LoginService
             var signingConfigurations = new SigningConfigurations();
             services.AddSingleton(signingConfigurations);
@@ -43,10 +56,12 @@ namespace application
 
             //Configurações para autenticação do token, precisamos decorar as controllers tbm
             //onde queremos ter as restrições de acesso
-            services.AddAuthentication(authOpions =>{
+            services.AddAuthentication(authOpions =>
+            {
                 authOpions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 authOpions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(bearerOptions => {
+            }).AddJwtBearer(bearerOptions =>
+            {
                 var paramsValidation = bearerOptions.TokenValidationParameters;
                 paramsValidation.IssuerSigningKey = signingConfigurations.Key;
                 paramsValidation.ValidAudience = tokenConfigurations.Audience;
@@ -56,7 +71,8 @@ namespace application
                 paramsValidation.ClockSkew = TimeSpan.Zero; // Não irá aceitar nenhum token vencido
             });
 
-            services.AddAuthorization(auth =>{
+            services.AddAuthorization(auth =>
+            {
                 auth.AddPolicy("Bearer", new AuthorizationPolicyBuilder()
                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                     .RequireAuthenticatedUser().Build());
@@ -87,7 +103,8 @@ namespace application
                 });
 
                 // Faz aparecer o botão Authorize
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme{
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
                     Description = "Entre com o Token JWT",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
