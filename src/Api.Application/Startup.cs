@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Api.CrossCutting.ConfigureMigrations;
 using Api.CrossCutting.DependencyInjection;
 using Api.CrossCutting.Mappings;
 using Api.Domain.Security;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -150,6 +152,14 @@ namespace application
             {
                 endpoints.MapControllers();
             });
+
+            if (Environment.GetEnvironmentVariable("MIGRATION").ToLower() == "APLICAR".ToLower())
+            {
+                using (var service = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                {
+                    ConfiguraMigrations.Configure(service);
+                }
+            }
         }
     }
 }
