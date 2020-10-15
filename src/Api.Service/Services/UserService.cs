@@ -31,7 +31,7 @@ namespace Api.Service.Services
             // Preciso armazenar seu retorno depois converte-la
             var entity =  await _repository.SelectAsync(id);
             // Aqui converto a entidade que veio do banco para o UserDto
-            return _mapper.Map<UserDto>(entity) ?? new UserDto();
+            return _mapper.Map<UserDto>(entity); // ?? new UserDto(); Modificamos para retornar null
         }
 
         public async Task<IEnumerable<UserDto>> GetAll()

@@ -4,8 +4,8 @@ using Api.Domain.Interfaces;
 
 namespace Api.Domain.Repository
 {
-    public interface IUserRepository : IRepository<UserEntity>
+    public interface ICepRepository : IRepository<CepEntity>
     {
-        Task<UserEntity> FindByLogin(string email);
+        Task<CepEntity> SelectAsync(string cep);
     }
 }

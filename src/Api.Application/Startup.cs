@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Api.CrossCutting.ConfigureMigrations;
 using Api.CrossCutting.DependencyInjection;
@@ -15,21 +16,36 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using System.Linq;
 
 namespace application
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
+            _environment = environment;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment _environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            if (_environment.IsEnvironment("Testing"))
+            {
+                Environment.SetEnvironmentVariable("DB_CONNECTION", "Server=.\\SQLEXPRESS;Initial Catalog=DbApi_Integration;MultipleActiveResultSets=true;User ID=sa;Password=123456");
+                Environment.SetEnvironmentVariable("DATABASE", "SQLSERVER");
+                Environment.SetEnvironmentVariable("MIGRATION", "APLICAR");
+                Environment.SetEnvironmentVariable("Audience", "ExemploAudience");
+                Environment.SetEnvironmentVariable("Issuer", "ExemploIssuer");
+                Environment.SetEnvironmentVariable("Seconds", "28800");
+            }
+
+            services.AddControllers();
+
             ConfigureRepository.ConfigureDependenciesRepository(services);
             ConfigureService.ConfigureDependenciesService(services);
 
@@ -48,13 +64,13 @@ namespace application
             var signingConfigurations = new SigningConfigurations();
             services.AddSingleton(signingConfigurations);
 
-            var tokenConfigurations = new TokenConfigurations();
-            // Aqui basicamente passamos as configurações da seção
-            // do TokenConfigurations do appsettings.json
-            new ConfigureFromConfigurationOptions<TokenConfigurations>(
-                Configuration.GetSection("TokenConfigurations"))
-                .Configure(tokenConfigurations);
-            services.AddSingleton(tokenConfigurations);
+            // var tokenConfigurations = new TokenConfigurations();
+            // // Aqui basicamente passamos as configurações da seção
+            // // do TokenConfigurations do appsettings.json
+            // new ConfigureFromConfigurationOptions<TokenConfigurations>(
+            //     Configuration.GetSection("TokenConfigurations"))
+            //     .Configure(tokenConfigurations);
+            // services.AddSingleton(tokenConfigurations);
 
             //Configurações para autenticação do token, precisamos decorar as controllers tbm
             //onde queremos ter as restrições de acesso
@@ -66,8 +82,8 @@ namespace application
             {
                 var paramsValidation = bearerOptions.TokenValidationParameters;
                 paramsValidation.IssuerSigningKey = signingConfigurations.Key;
-                paramsValidation.ValidAudience = tokenConfigurations.Audience;
-                paramsValidation.ValidIssuer = tokenConfigurations.Issuer;
+                paramsValidation.ValidAudience = Environment.GetEnvironmentVariable("Audience");
+                paramsValidation.ValidIssuer = Environment.GetEnvironmentVariable("Issuer");
                 paramsValidation.ValidateIssuerSigningKey = true;
                 paramsValidation.ValidateLifetime = true;
                 paramsValidation.ClockSkew = TimeSpan.Zero; // Não irá aceitar nenhum token vencido
@@ -79,9 +95,6 @@ namespace application
                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                     .RequireAuthenticatedUser().Build());
             });
-
-
-            services.AddControllers();
 
             services.AddSwaggerGen(c =>
             {

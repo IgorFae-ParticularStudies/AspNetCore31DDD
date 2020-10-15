@@ -15,21 +15,17 @@ namespace Api.Service.Services
 {
     public class LoginService : ILoginService
     {
-
         private SigningConfigurations _signingConfigurations;
-        private TokenConfigurations _tokenConfigurations;
         private IConfiguration _configuration;
 
         private IUserRepository _repository;
 
         public LoginService(IUserRepository repository,
                             SigningConfigurations signingConfigurations,
-                            TokenConfigurations tokenConfigurations,
                             IConfiguration configuration)
         {
             _repository = repository;
             _signingConfigurations = signingConfigurations;
-            _tokenConfigurations = tokenConfigurations;
             _configuration = configuration;
         }
 
@@ -63,14 +59,15 @@ namespace Api.Service.Services
                     // Data de criação do token
                     DateTime createDate = DateTime.Now;
                     // Data de expiração do token usando a configuração definida no appsettings
-                    DateTime expirationDate = createDate + TimeSpan.FromSeconds(_tokenConfigurations.Seconds);
+                    DateTime expirationDate = createDate + TimeSpan.FromSeconds(
+                        Convert.ToInt32(Environment.GetEnvironmentVariable("Seconds"))); // Ajuste para var de ambiente
 
                     // Nova instância para geração do token
                     var handler = new JwtSecurityTokenHandler();
                     //Criação do token
                     string token = CreateToken(identity, createDate, expirationDate, handler);
                     //Retorno de um objeto customizado com o token e demais propriedades
-                    return SuccessObject(createDate, expirationDate, token, user);
+                    return SuccessObject(createDate, expirationDate, token, baseUser);
 
                 }
             }
@@ -84,7 +81,7 @@ namespace Api.Service.Services
         /// <summary>
         /// Retorno customizado quando token é gerado com sucesso
         /// </summary>        
-        private object SuccessObject(DateTime createDate, DateTime expirationDate, string token, LoginDto user)
+        private object SuccessObject(DateTime createDate, DateTime expirationDate, string token, UserEntity user)
         {
             return new
             {
@@ -93,6 +90,7 @@ namespace Api.Service.Services
                 expiration = expirationDate.ToString("yyyy-MM-dd HH:mm:ss"),
                 accessToken = token,
                 userName = user.Email,
+                name = user.Name,
                 message = "Usuário Logado com sucesso"
             };
         }
@@ -104,8 +102,8 @@ namespace Api.Service.Services
         {
             var securityToken = handler.CreateToken(new SecurityTokenDescriptor
             {
-                Issuer = _tokenConfigurations.Issuer,
-                Audience = _tokenConfigurations.Audience,
+                Issuer = Environment.GetEnvironmentVariable("Issuer"), // Ajuste para var de ambiente
+                Audience = Environment.GetEnvironmentVariable("Audience"), // Ajuste para var de ambiente
                 SigningCredentials = _signingConfigurations.SigningCredentials,
                 Subject = identity,
                 NotBefore = createDate,
@@ -115,7 +113,5 @@ namespace Api.Service.Services
             var token = handler.WriteToken(securityToken);
             return token;
         }
-
-
     }
 }
