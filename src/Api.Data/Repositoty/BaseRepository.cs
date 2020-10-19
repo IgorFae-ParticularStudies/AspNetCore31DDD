@@ -17,7 +17,7 @@ namespace Api.Data.Repositoty
             _context = context;
             _dataset = _context.Set<T>();
         }
-        public async Task<bool> DeletetAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
             try
             {

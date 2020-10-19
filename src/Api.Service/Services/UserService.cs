@@ -22,7 +22,7 @@ namespace Api.Service.Services
         }
         public async Task<bool> Delete(Guid id)
         {
-            return await _repository.DeletetAsync(id);
+            return await _repository.DeleteAsync(id);
         }
 
         public async Task<UserDto> Get(Guid id)

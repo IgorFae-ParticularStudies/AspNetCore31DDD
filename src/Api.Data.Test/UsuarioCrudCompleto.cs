@@ -55,7 +55,7 @@ namespace Api.Data.Test
                 Assert.NotNull(todosRegistros);
                 Assert.True(todosRegistros.Count() > 0);
 
-                var registroDeletado = await _repo.DeletetAsync(registroSelecionado.Id);
+                var registroDeletado = await _repo.DeleteAsync(registroSelecionado.Id);
                 Assert.True(registroDeletado);
 
                 var usuarioPadrao = await _repo.FindByLogin("igor.sfae@gmail.com");

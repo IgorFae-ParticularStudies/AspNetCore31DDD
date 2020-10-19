@@ -75,7 +75,7 @@ namespace Api.Data.Test
                 Assert.NotNull(_todosMunicipios);
                 Assert.True(_todosMunicipios.Count() > 0);
 
-                var _municipioRemovido = await _repo.DeletetAsync(_municipioSelecionado.Id);
+                var _municipioRemovido = await _repo.DeleteAsync(_municipioSelecionado.Id);
                 Assert.True(_municipioRemovido);
             }
         }

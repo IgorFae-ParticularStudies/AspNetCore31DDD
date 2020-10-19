@@ -90,7 +90,7 @@ namespace Api.Data.Test
                 Assert.NotNull(_todosCeps);
                 Assert.True(_todosCeps.Count() > 0);
 
-                var _cepDeletado = await _repoCep.DeletetAsync(_cepSelecionado.Id);
+                var _cepDeletado = await _repoCep.DeleteAsync(_cepSelecionado.Id);
                 Assert.True(_cepDeletado);
 
                 _todosCeps = await _repo.SelectAsync();

@@ -1,9 +1,8 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
-using Api.Domain.Dtos.User;
-using Api.Domain.Entities;
-using Api.Domain.Interfaces.Services.User;
+using Api.Domain.Dtos.Municipio;
+using Api.Domain.Interfaces.Services.Municipio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,16 +10,16 @@ namespace Api.Application.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class MunicipiosController : ControllerBase
     {
+        public IMunicipioService _service { get; set; }
 
-        private IUserService _service;
-        public UsersController(IUserService service)
+        public MunicipiosController(IMunicipioService service)
         {
             _service = service;
         }
 
-        [Authorize("Bearer")] //Esse é o mesmo nome que definimos na policy na startup
+        [Authorize("Bearer")]
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
@@ -28,44 +27,48 @@ namespace Api.Application.Controllers
             {
                 return BadRequest(ModelState);
             }
+
             try
             {
                 return Ok(await _service.GetAll());
             }
             catch (ArgumentException e)
             {
+
                 return StatusCode((int)HttpStatusCode.InternalServerError, e.Message);
             }
         }
 
         [Authorize("Bearer")]
         [HttpGet]
-        [Route("{id}", Name = "GetWithId")]
+        [Route("{id}", Name = "GetMunicipioWithId")]
         public async Task<ActionResult> Get(Guid id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
             try
             {
                 var result = await _service.Get(id);
-                if (result == null)
+                if (result != null)
                 {
-                    return NotFound();
+                    return Ok(result);
                 }
-                return Ok(result);
+                return NotFound();
             }
             catch (ArgumentException e)
             {
+
                 return StatusCode((int)HttpStatusCode.InternalServerError, e.Message);
             }
         }
 
-        [AllowAnonymous]
-        [HttpPost]
-        // Se não tivesse o service injetado no construtor precisaria recebe-lo aqui como paramêtro
-        public async Task<ActionResult> Post([FromBody] UserDtoCreate user)
+        [Authorize("Bearer")]
+        [HttpGet]
+        [Route("Complete/{id}")]
+        public async Task<ActionResult> GetCompleteById(Guid id)
         {
             if (!ModelState.IsValid)
             {
@@ -74,27 +77,78 @@ namespace Api.Application.Controllers
 
             try
             {
-                var result = await _service.Post(user);
+                var result = await _service.GetCompleteById(id);
                 if (result != null)
                 {
-                    // Aqui que usamos a rota que nomeamos anteriormente e como esse rota
-                    // precisa de um id, pegamos o id retornado do banco e passamos para ela
-                    return Created(new Uri(Url.Link("GetWithId", new { id = result.Id })), result);
+                    return Ok(result);
+                }
+                return NotFound();
+            }
+            catch (ArgumentException e)
+            {
+
+                return StatusCode((int)HttpStatusCode.InternalServerError, e.Message);
+            }
+        }
+
+        [Authorize("Bearer")]
+        [HttpGet]
+        [Route("byIBGE/{codigoIBGE}")]
+        public async Task<ActionResult> GetCompleteByIBGE(int codigoIBGE)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _service.GetCompleteByIBGE(codigoIBGE);
+                if (result != null)
+                {
+                    return Ok(result);
+                }
+                return NotFound();
+            }
+            catch (ArgumentException e)
+            {
+
+                return StatusCode((int)HttpStatusCode.InternalServerError, e.Message);
+            }
+        }
+
+
+        [Authorize("Bearer")]
+        [HttpPost]
+        public async Task<ActionResult> Post([FromBody] MunicipioDtoCreate municipio)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _service.Post(municipio);
+                if (result != null)
+                {
+                    return Created(new Uri(Url.Link("GetMunicipioWithId", new { id = result.Id })), result);
                 }
                 else
                 {
                     return BadRequest();
                 }
             }
-            catch (ArgumentException e)
+            catch (System.ArgumentException e)
             {
+
                 return StatusCode((int)HttpStatusCode.InternalServerError, e.Message);
             }
         }
 
         [Authorize("Bearer")]
         [HttpPut]
-        public async Task<ActionResult> Put([FromBody] UserDtoUpdate user)
+        public async Task<ActionResult> Put([FromBody] MunicipioDtoUpdate municipio)
         {
             if (!ModelState.IsValid)
             {
@@ -103,7 +157,7 @@ namespace Api.Application.Controllers
 
             try
             {
-                var result = await _service.Put(user);
+                var result = await _service.Put(municipio);
                 if (result != null)
                 {
                     return Ok(result);
@@ -113,31 +167,34 @@ namespace Api.Application.Controllers
                     return BadRequest();
                 }
             }
-            catch (ArgumentException e)
+            catch (System.ArgumentException e)
             {
+
                 return StatusCode((int)HttpStatusCode.InternalServerError, e.Message);
             }
         }
 
         [Authorize("Bearer")]
-        [HttpDelete("{id}")]
-        //[Route("{id}")] posso passar o id assim ou passar igual direto no verbo
+        [HttpDelete]
+        [Route("{id}")]
         public async Task<ActionResult> Delete(Guid id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
             try
             {
                 return Ok(await _service.Delete(id));
             }
             catch (ArgumentException e)
             {
+
                 return StatusCode((int)HttpStatusCode.InternalServerError, e.Message);
             }
-
         }
+
 
     }
 }
