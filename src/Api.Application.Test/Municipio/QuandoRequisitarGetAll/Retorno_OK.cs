@@ -33,11 +33,9 @@ namespace Api.Application.Test.Municipio.QuandoRequisitarGetAll
                     }
                  }
             );
-
             _controller = new MunicipiosController(serviceMock.Object);
             var result = await _controller.GetAll();
             Assert.True(result is OkObjectResult);
-
         }
     }
 }
